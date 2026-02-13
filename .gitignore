@@ -1,0 +1,38 @@
+# ─── Model outputs & preprocessed data (too large for git) ───────────
+outputs/
+*.pth
+*.ckpt
+
+# ─── Training logs ───────────────────────────────────────────────────
+logs/
+
+# ─── Data (VerSe volumes stored locally) ─────────────────────────────
+data/
+
+# ─── Python ──────────────────────────────────────────────────────────
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+*.egg
+dist/
+build/
+.eggs/
+
+# ─── IDE / Editor ────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ─── OS ──────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+
+# ─── Misc ────────────────────────────────────────────────────────────
+*.nii
+*.nii.gz
+*.npz
+*.npy
+triton_cache/
