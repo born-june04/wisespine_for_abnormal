@@ -72,13 +72,23 @@ export nnUNet_raw="/gscratch/scrubbed/june0604/wisespine_for_abnormal/outputs/nn
 export nnUNet_preprocessed="/gscratch/scrubbed/june0604/wisespine_for_abnormal/outputs/nnunet/nnUNet_preprocessed"
 export nnUNet_results="/gscratch/scrubbed/june0604/wisespine_for_abnormal/outputs/nnunet/nnUNet_results"
 
+# ─── Redirect all caches to scrubbed (avoid home disk quota) ─────────
+CACHE_BASE="/gscratch/scrubbed/june0604/.cache_training"
+mkdir -p "$CACHE_BASE"
+
+export TMPDIR="$CACHE_BASE/tmp"
+mkdir -p "$TMPDIR"
+export XDG_CACHE_HOME="$CACHE_BASE"
+export MPLCONFIGDIR="$CACHE_BASE/matplotlib"
+mkdir -p "$MPLCONFIGDIR"
+export TORCH_HOME="$CACHE_BASE/torch"
+mkdir -p "$TORCH_HOME"
+export TRITON_CACHE_DIR="$CACHE_BASE/triton"
+mkdir -p "$TRITON_CACHE_DIR"
+
 # Performance tuning
 export OPENBLAS_NUM_THREADS=8
 export MKL_NUM_THREADS=8
-
-# Triton cache → scrubbed (avoid disk quota)
-export TRITON_CACHE_DIR="/gscratch/scrubbed/june0604/wisespine_for_abnormal/outputs/triton_cache"
-mkdir -p "$TRITON_CACHE_DIR"
 
 # Disable torch.compile (avoid compilation overhead)
 export nnUNet_compile="False"
@@ -130,11 +140,11 @@ fi
 # ─── Run training ─────────────────────────────────────────────────────
 if [ "$TRAINER" = "nnUNetTrainer" ]; then
     nnUNetv2_train "$DATASET_ID" 3d_fullres "$FOLD" \
-        --npz -num_gpus "$NUM_GPUS" $RESUME_FLAG 2>&1 | tee "$LOG_FILE"
+        -num_gpus "$NUM_GPUS" $RESUME_FLAG 2>&1 | tee "$LOG_FILE"
 else
     nnUNetv2_train "$DATASET_ID" 3d_fullres "$FOLD" \
         -tr "$TRAINER" \
-        --npz -num_gpus "$NUM_GPUS" $RESUME_FLAG 2>&1 | tee "$LOG_FILE"
+        -num_gpus "$NUM_GPUS" $RESUME_FLAG 2>&1 | tee "$LOG_FILE"
 fi
 
 # ─── Done ─────────────────────────────────────────────────────────────

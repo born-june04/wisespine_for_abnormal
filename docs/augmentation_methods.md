@@ -289,18 +289,44 @@ elif aug_type == 'fracture':
 - **HD95** — 95th percentile Hausdorff distance
 - Test set: (1) Normal VerSe test split  (2) Synthetic abnormal test data
 
-### 5.4 예상 결과 (placeholder)
+### 5.4 Training Results (1000 Epochs)
 
-```
-| Method                     | Normal | Hardware | Fracture | Avg   |
-|----------------------------|:------:|:--------:|:--------:|:-----:|
-| A. Baseline                | 0.85   | 0.45     | 0.50     | 0.60  |
-| B. + Hardware              | 0.84   | 0.78     | 0.52     | 0.71  |
-| C. + Fracture (Trad.)      | 0.84   | 0.47     | 0.72     | 0.68  |
-| D. + Fracture (Phys.)      | 0.84   | 0.47     | 0.76     | 0.69  |
-| E. + Full (Trad.)          | 0.83   | 0.76     | 0.70     | 0.76  |
-| F. + Full (Phys.) [Ours]   | 0.83   | 0.77     | 0.75     | 0.78  |
-```
+모든 모델은 nnU-Net 3d_fullres, fold 0, 2-GPU DDP로 학습. Validation은 fold 0의 205 cases (전체 1023 중).
+
+#### EMA Pseudo Dice on Validation (Normal Spine)
+
+| ID | Method | EMA Dice | Last 50 avg | Last 200 avg | Trend | Status |
+|----|--------|:--------:|:-----------:|:------------:|:-----:|:------:|
+| **A** | Baseline | **0.918** | 0.914 | 0.900 | +0.012 ↑ | still improving |
+| **B** | HardwareOnly | 0.869 | 0.867 | 0.841 | +0.021 ↑ | still improving |
+| **C** | FractureTrad | 0.909 | 0.909 | 0.890 | +0.013 ↑ | still improving |
+| **D** | FracturePhys | 0.891 | 0.882 | 0.860 | +0.024 ↑ | still improving |
+| **E** | FullTrad | 0.889 | 0.884 | 0.862 | +0.020 ↑ | still improving |
+| **F** | FullPhys | 0.871 | 0.867 | 0.840 | +0.022 ↑ | still improving |
+
+> [!IMPORTANT]
+> 모든 모델의 recent trend가 양수(+0.01~0.02)로, **1000 epoch에서 아직 수렴하지 않았다.**
+> Augmentation이 추가될수록 수렴이 느려지는 경향이 있으며 (hardware/physics 모델의 trend가 가장 큼),
+> 추가 학습 시 augmented 모델과 baseline의 gap이 좁혀질 것으로 예상된다.
 
 > [!NOTE]
-> 위 숫자는 예상치이며, 실제 학습 결과로 업데이트 예정.
+> 현재 validation set이 **모두 normal spine**이므로, augmentation 모델이 baseline보다 낮은 것은 예상된 결과이다.
+> Augmentation의 진정한 효과는 **abnormal test set** (hardware/fracture 포함)에서 평가해야 한다.
+
+#### 수렴 분석
+
+전체 6개 모델의 학습 경향 (Dice, Loss) 비교:
+
+![Convergence comparison — Dice and Loss curves for all 6 ablation models (1000 epochs)](images/convergence_comparison.png)
+
+**관찰:**
+- Baseline (A)이 가장 빠르게 수렴하며, augmentation이 많을수록 학습 속도가 느려진다
+- Hardware augmentation (B)은 단독 사용 시 가장 큰 Dice 하락을 유발 — metal artifact가 segmentation을 어렵게 만듦
+- Fracture augmentation에서 Traditional CV (C)가 Physics-based (D)보다 높은 Dice 달성 — 추가 학습 필요
+- Full pipeline (E, F)에서도 Traditional이 Physics보다 약간 높음 — 동일 경향
+
+#### 다음 단계
+
+1. **추가 학습**: 모든 모델을 2000 epoch까지 연장 학습 (수렴 미완료)
+2. **Abnormal Test Set 평가**: synthetic abnormal data 생성 후 test inference
+3. **Per-Vertebra Level Analysis**: vertebra별 Dice를 세분화하여 augmentation 효과 분석
